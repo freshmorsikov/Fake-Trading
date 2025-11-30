@@ -1,9 +1,17 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import java.util.Properties
+import kotlin.apply
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.build.config)
+}
+
+buildConfig {
+    val authToken = loadFromLocalProperties("OPENAI_API_KEY")
+    buildConfigField("OPENAI_API_KEY", authToken)
 }
 
 kotlin {
@@ -28,11 +36,27 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+
+            implementation(project.dependencies.platform(libs.supabase.bom))
+            implementation(libs.supabase.realtime)
+            implementation(libs.supabase.postgrest)
+
+            implementation(libs.koog)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
     }
+}
+
+private fun loadFromLocalProperties(key: String): String {
+    return rootProject.file("local.properties")
+        .inputStream()
+        .use { input ->
+            Properties().apply {
+                load(input)
+            }.getProperty(key)
+        }
 }
 
 

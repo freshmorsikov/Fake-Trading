@@ -1,8 +1,8 @@
 [versions]
-androidx-lifecycle = "2.9.5"
-composeMultiplatform = "1.8.2"
+androidx-lifecycle = "2.9.6"
+composeMultiplatform = "1.9.0"
 junit = "4.13.2"
-kotlin = "2.2.10"
+kotlin = "2.2.20"
 supabase = "3.1.4"
 koog = "0.5.3"
 buildconfig = "5.6.7"

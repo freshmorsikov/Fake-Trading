@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.build.config)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 buildConfig {
@@ -42,6 +43,8 @@ kotlin {
             implementation(libs.supabase.postgrest)
 
             implementation(libs.koog)
+
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

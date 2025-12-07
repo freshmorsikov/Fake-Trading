@@ -81,6 +81,12 @@ class SupabaseApi {
             }.map { it.balance }
     }
 
+    fun getTradesFlow(): Flow<List<TradeRow>> {
+        return supabase
+            .from("trade")
+            .selectAsFlow(primaryKey = TradeRow::id)
+    }
+
     fun getTradesFlow(name: String): Flow<List<TradeRow>> {
         return supabase
             .from("trade")

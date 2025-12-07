@@ -1,4 +1,4 @@
-package com.github.freshmorsikov.fake_trading
+package com.github.freshmorsikov.fake_trading.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,63 +6,28 @@ import com.github.freshmorsikov.fake_trading.ai.NewsGenerator
 import com.github.freshmorsikov.fake_trading.ai.TradingAnalytics
 import com.github.freshmorsikov.fake_trading.ai.TradingAnalyticsGenerator
 import com.github.freshmorsikov.fake_trading.api.SupabaseApi
-import com.github.freshmorsikov.fake_trading.api.model.NewsRow
 import com.github.freshmorsikov.fake_trading.api.model.StockRow
 import com.github.freshmorsikov.fake_trading.api.model.TradeRow
-import com.github.freshmorsikov.fake_trading.api.model.TraderRow
 import com.github.freshmorsikov.fake_trading.api.model.TradingAnalyticsRow
+import com.github.freshmorsikov.fake_trading.presentation.model.DAYS_COUNT
+import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
+import com.github.freshmorsikov.fake_trading.presentation.model.MarketState
+import com.github.freshmorsikov.fake_trading.presentation.model.NEWS_COUNT
+import com.github.freshmorsikov.fake_trading.presentation.model.Stock
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-private const val ADMIN = "admin"
-private const val DAYS_COUNT = 5
-private const val STEP_IN_DAY = 3
-private const val NEWS_COUNT = 4
-
-enum class DayTime {
-    Morning,
-    Noon,
-    Evening,
-}
-
-data class MarketState(
-    val name: String,
-    val stepNumber: Int,
-    val dayCount: Int,
-    val news: List<NewsRow>,
-    val traders: List<TraderRow>,
-    val stocks: List<Stock>,
-    val balance: Int,
-    val isRefreshEnabled: Boolean,
-) {
-    val day: Int = stepNumber / STEP_IN_DAY + 1
-    val dayTime: DayTime = when (stepNumber % STEP_IN_DAY) {
-        0 -> DayTime.Morning
-        1 -> DayTime.Noon
-        else -> DayTime.Evening
-    }
-    val isPreviousStepAvailable = stepNumber > 0
-    val isNextStepAvailable = stepNumber < DAYS_COUNT * STEP_IN_DAY - 1
-
-    val isAdmin: Boolean = name.lowercase() == ADMIN
-    val currentNews: List<NewsRow> = news.drop((day - 1) * NEWS_COUNT).take(NEWS_COUNT)
-}
-
-data class Stock(
-    val name: String,
-    val description: String,
-    val priceBuy: Int,
-    val priceSell: Int,
-    val count: Int,
-    val analytics: TradingAnalyticsRow?,
-    val canBuy: Boolean,
-    val isProcessing: Boolean,
-) {
-    val isBuyEnabled: Boolean = !isProcessing && canBuy
-    val isSellEnabled: Boolean = !isProcessing && count > 0
-}
 
 class MarketViewModel() : ViewModel() {
 
@@ -91,7 +56,7 @@ class MarketViewModel() : ViewModel() {
     val state = _state.asStateFlow()
 
     private fun isAdmin(): Boolean {
-        return _state.value.name.lowercase() == ADMIN
+        return _state.value.isAdmin
     }
 
     init {
@@ -155,19 +120,16 @@ class MarketViewModel() : ViewModel() {
         supabaseApi.deleteTradingAnalytics()
 
         val stocks = supabaseApi.getsStocksFlow().first()
-        println("stocks: ${stocks.size}")
 
         for (day in 1..DAYS_COUNT) {
             launch {
                 val newsPortion = news.drop((day - 1) * NEWS_COUNT).take(NEWS_COUNT)
-                println("day: ${day}, newsPortion: ${newsPortion.size}")
 
                 delay(day * 1_000L)
                 val tradingAnalytics = tradingAnalyticsGenerator.generateTradingAnalytics(
                     stocks = stocks,
                     news = newsPortion
                 )
-                println("day: ${day}, tradingAnalytics: ${tradingAnalytics?.size}")
 
                 tradingAnalytics?.let {
                     val tradingAnalyticsRows = stocks.mapIndexed { i, stock ->
@@ -324,7 +286,7 @@ class MarketViewModel() : ViewModel() {
                     stocks = _state.value.stocks,
                     updatedStocks = stocks,
                     trades = trades,
-                    analytics = dayAnalytics,
+                    dayAnalytics = dayAnalytics,
                     balance = balance,
                 )
             }
@@ -361,11 +323,11 @@ class MarketViewModel() : ViewModel() {
         stocks: List<Stock>,
         updatedStocks: List<StockRow>,
         trades: List<TradeRow>,
-        analytics: List<TradingAnalyticsRow>,
+        dayAnalytics: List<TradingAnalyticsRow>,
         balance: Int,
     ): List<Stock> {
         return stocks.map { stock ->
-            val stockAnalytics = analytics.find { it.stock == stock.name }
+            val stockAnalytics = dayAnalytics.find { it.stock == stock.name }
             val updatedStock = updatedStocks.find { it.name == stock.name }
             stock.copy(
                 priceBuy = updatedStock?.priceBuy ?: stock.priceBuy,

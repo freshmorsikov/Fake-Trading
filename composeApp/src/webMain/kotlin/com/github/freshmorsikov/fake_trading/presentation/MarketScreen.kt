@@ -1,4 +1,4 @@
-package com.github.freshmorsikov.fake_trading
+package com.github.freshmorsikov.fake_trading.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
+import com.github.freshmorsikov.fake_trading.presentation.model.Stock
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

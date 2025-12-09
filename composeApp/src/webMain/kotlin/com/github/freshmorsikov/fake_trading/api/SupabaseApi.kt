@@ -44,6 +44,14 @@ class SupabaseApi {
             }.map { it.step }
     }
 
+    suspend fun getStep(): Int? {
+        return supabase.from(table = "step")
+            .select {
+                filter { StepRow::id eq 1 }
+            }.decodeSingleOrNull<StepRow>()
+            ?.step
+    }
+
     suspend fun updateStep(step: Int) {
         supabase.from("step").update(
             update = { StepRow::step setTo step }
@@ -126,7 +134,7 @@ class SupabaseApi {
     suspend fun deleteTradingAnalytics() {
         supabase.from(table = "analytics")
             .delete {
-                filter { TradingAnalyticsRow::day gte 0 }
+                filter { TradingAnalyticsRow::step gte 0 }
             }
     }
 
@@ -142,39 +150,46 @@ class SupabaseApi {
     }
 
     suspend fun createTrade(
-        traderName: String,
         stockName: String,
+        traderName: String,
         buy: Boolean,
+        price: Int,
+        step: Int,
     ) {
-        val stock = getStockByName(stockName = stockName) ?: return
         supabase.from(table = "trade")
             .insert(
                 value = TradeRow(
                     trader = traderName,
-                    stock = stock.name,
-                    price = if (buy) stock.priceBuy else stock.priceSell,
+                    stock = stockName,
+                    price = price,
                     buy = buy,
+                    step = step,
                 )
             )
-
-        val priceChange = if (buy) 10 else -10
-        supabase.from(table = "stock")
-            .update(
-                update = {
-                    StockRow::priceBuy setTo stock.priceBuy + priceChange
-                    StockRow::priceSell setTo stock.priceSell + priceChange
-                }
-            ) {
-                filter { StockRow::name eq stock.name }
-            }
     }
 
-    private suspend fun getStockByName(stockName: String): StockRow? {
+    suspend fun getStockByName(stockName: String): StockRow? {
         return supabase
             .from("stock")
             .select {
                 filter { StockRow::name eq stockName }
-            }.decodeSingleOrNull<StockRow>()
+            }.decodeSingleOrNull()
+    }
+
+    suspend fun getTradesByName(stockName: String): List<TradeRow> {
+        return supabase
+            .from("trade")
+            .select {
+                filter { TradeRow::stock eq stockName }
+            }.decodeList()
+    }
+
+    suspend fun getTradingAnalyticsByName(stockName: String): List<TradingAnalyticsRow> {
+        return supabase
+            .from("analytics")
+            .select {
+                filter { TradingAnalyticsRow::stock eq stockName }
+            }.decodeList()
     }
 
 }

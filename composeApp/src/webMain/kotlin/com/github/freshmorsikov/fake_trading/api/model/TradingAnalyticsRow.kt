@@ -8,5 +8,5 @@ data class TradingAnalyticsRow(
     val stock: String,
     val change: Int,
     val note: String,
-    val day: Int,
+    val step: Int,
 )

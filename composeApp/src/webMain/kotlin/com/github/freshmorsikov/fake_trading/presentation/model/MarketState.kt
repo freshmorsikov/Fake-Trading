@@ -3,7 +3,7 @@ package com.github.freshmorsikov.fake_trading.presentation.model
 import com.github.freshmorsikov.fake_trading.api.model.NewsRow
 import com.github.freshmorsikov.fake_trading.api.model.TraderRow
 
-private const val STEP_IN_DAY = 3
+const val STEP_IN_DAY = 3
 const val DAYS_COUNT = 5
 const val NEWS_COUNT = 4
 private const val ADMIN = "admin"

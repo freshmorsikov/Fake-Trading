@@ -9,4 +9,5 @@ data class TradeRow(
     val stock: String,
     val price: Int,
     val buy: Boolean,
+    val step: Int,
 )

@@ -151,8 +151,6 @@ class MarketViewModel() : ViewModel() {
     fun buyStock(stockName: String) {
         viewModelScope.launch {
             val stock = stockRepository.getStockByName(name = stockName) ?: return@launch
-            println("buyStock: $stock")
-
             setProcessing(
                 stockName = stockName,
                 isProcessing = true,
@@ -174,8 +172,6 @@ class MarketViewModel() : ViewModel() {
     fun sellStock(stockName: String) {
         viewModelScope.launch {
             val stock = stockRepository.getStockByName(name = stockName) ?: return@launch
-            println("sellStock: $stock")
-
             setProcessing(
                 stockName = stockName,
                 isProcessing = true,

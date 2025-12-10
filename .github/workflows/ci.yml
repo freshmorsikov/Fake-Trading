@@ -16,8 +16,8 @@ jobs:
           SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
         run: |
           echo -e "OPENAI_API_KEY=$OPENAI_API_KEY" > local.properties
-          echo -e "SUPABASE_URL=SUPABASE_URL" >> local.properties
-          echo -e "SUPABASE_API_KEY=SUPABASE_API_KEY" >> local.properties
+          echo -e "SUPABASE_URL=$SUPABASE_URL" >> local.properties
+          echo -e "SUPABASE_API_KEY=$SUPABASE_API_KEY" >> local.properties
       - name: "Upload properties"
         uses: actions/upload-artifact@v4
         with:

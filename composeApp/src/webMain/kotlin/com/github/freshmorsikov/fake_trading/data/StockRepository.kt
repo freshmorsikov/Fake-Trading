@@ -59,17 +59,14 @@ class StockRepository {
     suspend fun getStockByName(name: String): CommonStock? {
         val stock = supabaseApi.getStockByName(stockName = name) ?: return null
         val trades = supabaseApi.getTradesByName(stockName = name)
-        println("trades: $trades")
         val analytics = supabaseApi.getTradingAnalyticsByName(stockName = name)
         val step = supabaseApi.getStep() ?: 0
-        println("step: $step")
         val priceBuy = calculatePrice(
             basePrice = stock.priceBuy,
             trades = trades,
             analytics = analytics,
             step = step,
         )
-        println("priceBuy: $priceBuy")
 
         return CommonStock(
             name = stock.name,

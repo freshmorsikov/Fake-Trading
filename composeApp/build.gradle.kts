@@ -1,6 +1,4 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import java.util.Properties
-import kotlin.apply
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,14 +9,14 @@ plugins {
 }
 
 buildConfig {
-    val authToken = loadFromLocalProperties("OPENAI_API_KEY")
-    buildConfigField("OPENAI_API_KEY", authToken)
+    val openAiApiKey = project.findProperty("OPENAI_API_KEY") as String
+    buildConfigField("OPENAI_API_KEY", openAiApiKey)
 
-    val supabaseUrl = loadFromLocalProperties("SUPABASE_URL")
+    val supabaseUrl = project.findProperty("SUPABASE_URL") as String
     buildConfigField("SUPABASE_URL", supabaseUrl)
 
-    val supabaseKey = loadFromLocalProperties("SUPABASE_API_KEY")
-    buildConfigField("SUPABASE_API_KEY", supabaseKey)
+    val supabaseApiKey = project.findProperty("SUPABASE_API_KEY") as String
+    buildConfigField("SUPABASE_API_KEY", supabaseApiKey)
 }
 
 kotlin {
@@ -57,15 +55,3 @@ kotlin {
         }
     }
 }
-
-private fun loadFromLocalProperties(key: String): String {
-    return rootProject.file("local.properties")
-        .inputStream()
-        .use { input ->
-            Properties().apply {
-                load(input)
-            }.getProperty(key)
-        }
-}
-
-

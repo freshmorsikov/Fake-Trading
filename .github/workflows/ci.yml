@@ -5,29 +5,9 @@ on:
       - main
 
 jobs:
-  setup:
-    name: "Upload secrets"
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Put secrets to properties"
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
-        run: |
-          echo -e "OPENAI_API_KEY=$OPENAI_API_KEY" > local.properties
-          echo -e "SUPABASE_URL=$SUPABASE_URL" >> local.properties
-          echo -e "SUPABASE_API_KEY=$SUPABASE_API_KEY" >> local.properties
-      - name: "Upload properties"
-        uses: actions/upload-artifact@v4
-        with:
-          name: local-properties
-          path: local.properties
-
   build:
     name: "Build Kotlin/Wasm"
     runs-on: ubuntu-latest
-    needs: setup
     steps:
       - name: "Set up JDK"
         uses: actions/setup-java@v2
@@ -38,14 +18,16 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v3
 
-      - name: "Download properties"
-        uses: actions/download-artifact@v4
-        with:
-          name: local-properties
-          path: .
-
       - name: "Run Gradle Tasks"
-        run: ./gradlew wasmJsBrowserDistribution
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
+        run: |
+          ./gradlew wasmJsBrowserDistribution \
+            -POPENAI_API_KEY="$OPENAI_API_KEY" \
+            -PSUPABASE_URL="$SUPABASE_URL" \
+            -PSUPABASE_API_KEY="$SUPABASE_API_KEY"
 
       - name: "Fix permissions"
         run: |

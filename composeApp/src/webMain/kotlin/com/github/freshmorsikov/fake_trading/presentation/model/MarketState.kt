@@ -14,7 +14,7 @@ data class MarketState(
     val stepNumber: Int,
     val news: List<NewsRow>,
     val traders: List<TraderRow>,
-    val stocks: List<Stock>,
+    val stocks: List<StockUi>,
     val balance: Int,
     val isRefreshEnabled: Boolean,
 ) {

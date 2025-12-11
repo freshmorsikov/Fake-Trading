@@ -226,10 +226,11 @@ class MarketViewModel() : ViewModel() {
         combine(
             stockRepository.getStocksFlow(),
             tradesFlow,
-            balanceFlow
-        ) { stocks, trades, balance ->
+            balanceFlow,
+            supabaseApi.getStepFlow(),
+        ) { stocks, trades, balance, step ->
             stocks.map { stock ->
-                Stock(
+                StockUi(
                     name = stock.name,
                     description = stock.description,
                     priceBuy = stock.priceBuy,
@@ -238,7 +239,11 @@ class MarketViewModel() : ViewModel() {
                         trades = trades,
                         stockName = stock.name,
                     ),
-                    analytics = null,
+                    analytics = stock.analytics.find { analytics ->
+                        analytics.step == step
+                    }?.takeIf { analytics ->
+                        analytics.change != 0
+                    },
                     canBuy = balance > stock.priceBuy,
                 )
             }

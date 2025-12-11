@@ -16,6 +16,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.github.freshmorsikov.fake_trading.core.ui.LocalCompact
+import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
 import com.github.freshmorsikov.fake_trading.presentation.model.Stock
 
 @Composable
@@ -115,7 +116,7 @@ private fun StockButtons(
     Row(horizontalArrangement = spacedBy(4.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = priceBuy.toString(),
+                text = "$priceBuy $CURRENCY",
                 style = MaterialTheme.typography.bodyLarge,
             )
             Button(
@@ -133,7 +134,7 @@ private fun StockButtons(
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = priceSell.toString(),
+                text = "$priceSell $CURRENCY",
                 style = MaterialTheme.typography.bodyLarge,
             )
             Button(

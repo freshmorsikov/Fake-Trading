@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.freshmorsikov.fake_trading.presentation.MarketViewModel
 import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
 import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
+import com.github.freshmorsikov.fake_trading.presentation.model.MarketState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -35,112 +36,128 @@ fun MarketScreen(viewModel: MarketViewModel = viewModel { MarketViewModel() }) {
             val state by viewModel.state.collectAsState()
             val stateValue = state
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                TopInfoCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    day = stateValue.day,
-                    dayCount = stateValue.dayCount,
-                    dayTime = stateValue.dayTime,
-                    isAdmin = stateValue.isAdmin
-                )
-
-                if (stateValue.name.isEmpty()) {
+            Box(modifier = Modifier.padding(16.dp)) {
+                if (stateValue.isInit) {
                     NameInput(
-                        modifier = Modifier.padding(top = 16.dp),
                         onSave = { name ->
                             viewModel.setName(name = name)
                         }
                     )
+                } else {
+                    TradingContent(
+                        marketState = stateValue,
+                        onBuyClick = { viewModel.buyStock(stockName = it) },
+                        onSellClick = { viewModel.sellStock(stockName = it) },
+                        onPreviousClick = { viewModel.goToPreviousStep() },
+                        onNextClick = { viewModel.goToNextStep() },
+                        onNewsClick = { viewModel.generateNews() },
+                    )
                 }
+            }
+        }
+    }
+}
 
-                Row(modifier = Modifier.padding(top = 16.dp)) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (stateValue.currentNews.isNotEmpty()) {
-                            Text(
-                                modifier = Modifier.padding(bottom = 4.dp),
-                                text = "Стонксы",
-                                style = MaterialTheme.typography.titleLarge,
-                            )
-                        }
-                        stateValue.stocks.forEach { stock ->
-                            Column {
-                                StockItem(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    stock = stock,
-                                    onBuy = {
-                                        viewModel.buyStock(stockName = stock.name)
-                                    },
-                                    onSell = {
-                                        viewModel.sellStock(stockName = stock.name)
-                                    },
-                                )
-                                HorizontalDivider()
-                            }
-                        }
-                    }
+@Composable
+private fun TradingContent(
+    marketState: MarketState,
+    onBuyClick: (String) -> Unit,
+    onSellClick: (String) -> Unit,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onNewsClick: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        TopInfoCard(
+            modifier = Modifier.fillMaxWidth(),
+            day = marketState.day,
+            dayTime = marketState.dayTime,
+            progress = marketState.progress,
+            isAdmin = marketState.isAdmin
+        )
 
-                    if (stateValue.isAdmin) {
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 16.dp)
-                        ) {
-                            if (stateValue.currentNews.isNotEmpty()) {
-                                Text(
-                                    modifier = Modifier.padding(bottom = 4.dp),
-                                    text = "Новости",
-                                    style = MaterialTheme.typography.titleLarge,
-                                )
-                            }
-                            stateValue.currentNews.forEach { news ->
-                                Text(text = news.title)
-                            }
-
-                            if (stateValue.traders.isNotEmpty()) {
-                                Text(
-                                    modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
-                                    text = "Трейдеры",
-                                    style = MaterialTheme.typography.titleLarge,
-                                )
-                            }
-                            stateValue.traders.forEach { trader ->
-                                Text(text = "${trader.name}: ${trader.balance}")
-                            }
-                        }
+        Row(modifier = Modifier.padding(top = 16.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
+                if (marketState.currentNews.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier.padding(bottom = 4.dp),
+                        text = "Стонксы",
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                }
+                marketState.stocks.forEach { stock ->
+                    Column {
+                        StockItem(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            stock = stock,
+                            onBuy = {
+                                onBuyClick(stock.name)
+                            },
+                            onSell = {
+                                onSellClick(stock.name)
+                            },
+                        )
+                        HorizontalDivider()
                     }
                 }
+            }
 
-                if (stateValue.isAdmin) {
-                    Row(
-                        modifier = Modifier.padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        Button(
-                            onClick = { viewModel.goToPreviousStep() },
-                            enabled = stateValue.isPreviousStepAvailable,
-                        ) {
-                            Text(text = "Назад")
-                        }
-                        Button(
-                            onClick = { viewModel.goToNextStep() },
-                            enabled = stateValue.isNextStepAvailable,
-                        ) {
-                            Text(text = "Продолжить")
-                        }
+            if (marketState.isAdmin) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp)
+                ) {
+                    if (marketState.currentNews.isNotEmpty()) {
+                        Text(
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            text = "Новости",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
                     }
-                    if (stateValue.stepNumber == 0) {
-                        Button(
-                            modifier = Modifier.padding(top = 16.dp),
-                            onClick = { viewModel.generateNews() },
-                            enabled = stateValue.isRefreshEnabled,
-                        ) {
-                            Text(text = "Новости")
-                        }
+                    marketState.currentNews.forEach { news ->
+                        Text(text = news.title)
                     }
+
+                    if (marketState.traders.isNotEmpty()) {
+                        Text(
+                            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+                            text = "Трейдеры",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
+                    marketState.traders.forEach { trader ->
+                        Text(text = "${trader.name}: ${trader.balance}")
+                    }
+                }
+            }
+        }
+
+        if (marketState.isAdmin) {
+            Row(
+                modifier = Modifier.padding(top = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Button(
+                    onClick = { onPreviousClick() },
+                    enabled = marketState.isPreviousStepAvailable,
+                ) {
+                    Text(text = "Назад")
+                }
+                Button(
+                    onClick = { onNextClick() },
+                    enabled = marketState.isNextStepAvailable,
+                ) {
+                    Text(text = "Продолжить")
+                }
+            }
+            if (marketState.stepNumber == 0) {
+                Button(
+                    modifier = Modifier.padding(top = 16.dp),
+                    onClick = { onNewsClick() },
+                    enabled = marketState.isRefreshEnabled,
+                ) {
+                    Text(text = "Новости")
                 }
             }
         }
@@ -155,28 +172,38 @@ private fun NameInput(
     var input by remember {
         mutableStateOf("")
     }
-    Column(modifier = modifier) {
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = input,
-            textStyle = MaterialTheme.typography.bodyLarge,
-            placeholder = {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "Имя"
-                )
-            },
-            onValueChange = { value ->
-                input = value
-            },
-        )
-        Button(
-            modifier = Modifier.padding(top = 8.dp),
-            onClick = {
-                onSave(input)
-            },
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 600.dp)
+                .fillMaxWidth()
+                .align(Alignment.TopCenter),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = "Начать")
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = input,
+                textStyle = MaterialTheme.typography.bodyLarge,
+                placeholder = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Имя"
+                    )
+                },
+                onValueChange = { value ->
+                    input = value
+                },
+            )
+            Button(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .fillMaxWidth(),
+                onClick = {
+                    onSave(input)
+                },
+            ) {
+                Text(text = "Начать")
+            }
         }
     }
 }
@@ -184,8 +211,8 @@ private fun NameInput(
 @Composable
 private fun TopInfoCard(
     day: Int,
-    dayCount: Int,
     dayTime: DayTime,
+    progress: Float,
     isAdmin: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -202,8 +229,8 @@ private fun TopInfoCard(
         DayTime(
             modifier = Modifier.fillMaxWidth(),
             day = day,
-            dayCount = dayCount,
             dayTime = dayTime,
+            progress = progress,
         )
         if (!isAdmin) {
             HorizontalDivider(
@@ -224,8 +251,8 @@ private fun TopInfoCard(
 @Composable
 private fun DayTime(
     day: Int,
-    dayCount: Int,
     dayTime: DayTime,
+    progress: Float,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -267,7 +294,7 @@ private fun DayTime(
                 .padding(top = 8.dp)
                 .height(height = 8.dp)
                 .fillMaxWidth(),
-            progress = { day.toFloat() / dayCount },
+            progress = { progress },
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.primaryContainer,
             gapSize = (-8).dp,

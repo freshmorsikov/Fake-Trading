@@ -12,7 +12,6 @@ const val CURRENCY = "₣m"
 data class MarketState(
     val name: String,
     val stepNumber: Int,
-    val dayCount: Int,
     val news: List<NewsRow>,
     val traders: List<TraderRow>,
     val stocks: List<Stock>,
@@ -29,6 +28,9 @@ data class MarketState(
     val isNextStepAvailable = stepNumber < DAYS_COUNT * STEP_IN_DAY - 1
     val isTradingAvailable = dayTime == DayTime.Noon
 
+    val progress: Float = stepNumber.toFloat() / (DAYS_COUNT * STEP_IN_DAY)
+
+    val isInit: Boolean = name.isEmpty()
     val isAdmin: Boolean = name.lowercase() == ADMIN
     val currentNews: List<NewsRow> = news.drop((day - 1) * NEWS_COUNT).take(NEWS_COUNT)
 }

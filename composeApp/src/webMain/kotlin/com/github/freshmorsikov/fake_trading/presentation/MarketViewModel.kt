@@ -35,7 +35,6 @@ class MarketViewModel() : ViewModel() {
         MarketState(
             name = "",
             stepNumber = 0,
-            dayCount = DAYS_COUNT,
             news = emptyList(),
             traders = emptyList(),
             stocks = emptyList(),

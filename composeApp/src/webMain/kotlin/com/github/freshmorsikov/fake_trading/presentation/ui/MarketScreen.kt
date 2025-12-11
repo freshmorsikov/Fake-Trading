@@ -1,19 +1,16 @@
-package com.github.freshmorsikov.fake_trading.presentation
+package com.github.freshmorsikov.fake_trading.presentation.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.github.freshmorsikov.fake_trading.presentation.MarketViewModel
 import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
-import com.github.freshmorsikov.fake_trading.presentation.model.Stock
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -67,14 +64,14 @@ fun MarketScreen(viewModel: MarketViewModel = viewModel { MarketViewModel() }) {
                         }
                         stateValue.stocks.forEach { stock ->
                             Column {
-                                StockCard(
+                                StockItem(
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     stock = stock,
                                     onBuy = {
-                                        viewModel.buyStock(stockName = it.name)
+                                        viewModel.buyStock(stockName = stock.name)
                                     },
                                     onSell = {
-                                        viewModel.sellStock(stockName = it.name)
+                                        viewModel.sellStock(stockName = stock.name)
                                     },
                                 )
                                 HorizontalDivider()
@@ -141,109 +138,6 @@ fun MarketScreen(viewModel: MarketViewModel = viewModel { MarketViewModel() }) {
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StockCard(
-    stock: Stock,
-    onBuy: (Stock) -> Unit,
-    onSell: (Stock) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = stock.name,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                modifier = Modifier.padding(top = 4.dp),
-                text = stock.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
-            )
-            stock.analytics?.let { analytics ->
-                Row(
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.tertiary.copy(
-                                alpha = 0.2f
-                            ),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(4.dp),
-                ) {
-                    val color = if (analytics.change > 0) {
-                        Color(0xFF27AE60)
-                    } else {
-                        Color(0xFFEB5757)
-                    }
-                    val sign = if (analytics.change > 0) {
-                        "+"
-                    } else {
-                        ""
-                    }
-                    Text(
-                        text = "$sign${analytics.change}",
-                        color = color,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Text(
-                        modifier = Modifier.padding(start = 4.dp),
-                        text = analytics.note,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
-        if (stock.count > 0) {
-            Text(
-                text = "x ${stock.count}",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stock.priceBuy.toString(),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Button(
-                onClick = {
-                    onBuy(stock)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = Color.White,
-                    containerColor = Color(0xFF27AE60),
-                ),
-                enabled = stock.isBuyEnabled,
-            ) {
-                Text(text = "Купить")
-            }
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stock.priceSell.toString(),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Button(
-                onClick = {
-                    onSell(stock)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = Color.White,
-                    containerColor = Color(0xFFEB5757),
-                ),
-                enabled = stock.isSellEnabled,
-            ) {
-                Text(text = "Продать")
             }
         }
     }

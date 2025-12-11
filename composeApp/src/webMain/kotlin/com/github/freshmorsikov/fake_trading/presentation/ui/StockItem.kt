@@ -16,6 +16,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.github.freshmorsikov.fake_trading.core.ui.LocalCompact
+import com.github.freshmorsikov.fake_trading.core.ui.rememberButtonState
 import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
 import com.github.freshmorsikov.fake_trading.presentation.model.Stock
 
@@ -104,6 +105,8 @@ private fun StockTitle(
     )
 }
 
+
+
 @Composable
 private fun StockButtons(
     priceBuy: Int,
@@ -114,6 +117,7 @@ private fun StockButtons(
     onSell: () -> Unit,
 ) {
     Row(horizontalArrangement = spacedBy(4.dp)) {
+        val buttonState = rememberButtonState()
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "$priceBuy $CURRENCY",
@@ -121,13 +125,14 @@ private fun StockButtons(
             )
             Button(
                 onClick = {
+                    buttonState.setClicked()
                     onBuy()
                 },
                 colors = ButtonDefaults.buttonColors(
                     contentColor = Color.White,
                     containerColor = Color(0xFF27AE60),
                 ),
-                enabled = isBuyEnabled,
+                enabled = buttonState.isEnabled && isBuyEnabled,
             ) {
                 Text(text = "Купить")
             }
@@ -139,13 +144,14 @@ private fun StockButtons(
             )
             Button(
                 onClick = {
+                    buttonState.setClicked()
                     onSell()
                 },
                 colors = ButtonDefaults.buttonColors(
                     contentColor = Color.White,
                     containerColor = Color(0xFFEB5757),
                 ),
-                enabled = isSellEnabled,
+                enabled = buttonState.isEnabled && isSellEnabled,
             ) {
                 Text(text = "Продать")
             }

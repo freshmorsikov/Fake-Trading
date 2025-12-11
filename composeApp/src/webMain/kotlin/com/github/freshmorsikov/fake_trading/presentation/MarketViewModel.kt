@@ -150,10 +150,6 @@ class MarketViewModel() : ViewModel() {
     fun buyStock(stockName: String) {
         viewModelScope.launch {
             val stock = stockRepository.getStockByName(name = stockName) ?: return@launch
-            setProcessing(
-                stockName = stockName,
-                isProcessing = true,
-            )
             supabaseApi.createTrade(
                 stockName = stockName,
                 traderName = _state.value.name,
@@ -161,44 +157,18 @@ class MarketViewModel() : ViewModel() {
                 price = stock.priceBuy,
                 step = _state.value.stepNumber,
             )
-            setProcessing(
-                stockName = stockName,
-                isProcessing = false,
-            )
         }
     }
 
     fun sellStock(stockName: String) {
         viewModelScope.launch {
             val stock = stockRepository.getStockByName(name = stockName) ?: return@launch
-            setProcessing(
-                stockName = stockName,
-                isProcessing = true,
-            )
             supabaseApi.createTrade(
                 stockName = stockName,
                 traderName = _state.value.name,
                 buy = false,
                 price = stock.priceSell,
                 step = _state.value.stepNumber,
-            )
-            setProcessing(
-                stockName = stockName,
-                isProcessing = false,
-            )
-        }
-    }
-
-    private fun setProcessing(stockName: String, isProcessing: Boolean) {
-        _state.update {
-            it.copy(
-                stocks = it.stocks.map { stock ->
-                    if (stockName == stock.name) {
-                        stock.copy(isProcessing = isProcessing)
-                    } else {
-                        stock
-                    }
-                }
             )
         }
     }
@@ -270,7 +240,6 @@ class MarketViewModel() : ViewModel() {
                     ),
                     analytics = null,
                     canBuy = balance > stock.priceBuy,
-                    isProcessing = false,
                 )
             }
         }.onEach { stocks ->

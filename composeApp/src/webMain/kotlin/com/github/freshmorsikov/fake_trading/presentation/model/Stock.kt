@@ -10,8 +10,7 @@ data class Stock(
     val count: Int,
     val analytics: TradingAnalyticsRow?,
     val canBuy: Boolean,
-    val isProcessing: Boolean,
 ) {
-    val isBuyEnabled: Boolean = !isProcessing && canBuy
-    val isSellEnabled: Boolean = !isProcessing && count > 0
+    val isBuyEnabled: Boolean = canBuy
+    val isSellEnabled: Boolean = count > 0
 }

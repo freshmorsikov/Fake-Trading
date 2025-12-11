@@ -7,6 +7,7 @@ const val STEP_IN_DAY = 3
 const val DAYS_COUNT = 5
 const val NEWS_COUNT = 4
 private const val ADMIN = "admin"
+const val CURRENCY = "₣m"
 
 data class MarketState(
     val name: String,
@@ -26,6 +27,7 @@ data class MarketState(
     }
     val isPreviousStepAvailable = stepNumber > 0
     val isNextStepAvailable = stepNumber < DAYS_COUNT * STEP_IN_DAY - 1
+    val isTradingAvailable = dayTime == DayTime.Noon
 
     val isAdmin: Boolean = name.lowercase() == ADMIN
     val currentNews: List<NewsRow> = news.drop((day - 1) * NEWS_COUNT).take(NEWS_COUNT)

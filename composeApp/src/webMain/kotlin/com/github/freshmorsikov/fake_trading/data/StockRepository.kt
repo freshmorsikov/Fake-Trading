@@ -3,7 +3,7 @@ package com.github.freshmorsikov.fake_trading.data
 import com.github.freshmorsikov.fake_trading.api.SupabaseApi
 import com.github.freshmorsikov.fake_trading.api.model.TradeRow
 import com.github.freshmorsikov.fake_trading.api.model.TradingAnalyticsRow
-import com.github.freshmorsikov.fake_trading.domain.model.CommonStock
+import com.github.freshmorsikov.fake_trading.domain.model.Stock
 import com.github.freshmorsikov.fake_trading.domain.model.CommonTradingAnalytics
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -18,7 +18,7 @@ class StockRepository {
         SupabaseApi()
     }
 
-    fun getStocksFlow(): Flow<List<CommonStock>> {
+    fun getStocksFlow(): Flow<List<Stock>> {
         return combine(
             supabaseApi.getsStocksFlow(),
             supabaseApi.getTradesFlow(),
@@ -39,7 +39,7 @@ class StockRepository {
                     step = step,
                 )
 
-                CommonStock(
+                Stock(
                     name = stock.name,
                     description = stock.description,
                     priceBuy = priceBuy,
@@ -56,7 +56,7 @@ class StockRepository {
         }
     }
 
-    suspend fun getStockByName(name: String): CommonStock? {
+    suspend fun getStockByName(name: String): Stock? {
         val stock = supabaseApi.getStockByName(stockName = name) ?: return null
         val trades = supabaseApi.getTradesByName(stockName = name)
         val analytics = supabaseApi.getTradingAnalyticsByName(stockName = name)
@@ -68,7 +68,7 @@ class StockRepository {
             step = step,
         )
 
-        return CommonStock(
+        return Stock(
             name = stock.name,
             description = stock.description,
             priceBuy = priceBuy,

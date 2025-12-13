@@ -10,6 +10,7 @@ import com.github.freshmorsikov.fake_trading.api.model.StockRow
 import com.github.freshmorsikov.fake_trading.api.model.TradeRow
 import com.github.freshmorsikov.fake_trading.api.model.TradingAnalyticsRow
 import com.github.freshmorsikov.fake_trading.data.StockRepository
+import com.github.freshmorsikov.fake_trading.domain.GetStockCountListFlowUseCase
 import com.github.freshmorsikov.fake_trading.presentation.model.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -30,6 +31,9 @@ class MarketViewModel() : ViewModel() {
     private val stockRepository by lazy {
         StockRepository()
     }
+    private val getStockCountListFlowUseCase by lazy {
+        GetStockCountListFlowUseCase()
+    }
 
     private val _state = MutableStateFlow(
         MarketState(
@@ -38,7 +42,7 @@ class MarketViewModel() : ViewModel() {
             news = emptyList(),
             traders = emptyList(),
             stocks = emptyList(),
-            balance = 0,
+            balance = null,
             isRefreshEnabled = true,
         )
     )
@@ -57,7 +61,7 @@ class MarketViewModel() : ViewModel() {
             it.copy(name = name)
         }
 
-        subscribeToStocks(name = name)
+        subscribeToStocks(traderName = name)
         if (isAdmin()) {
             subscribeToNews()
             subscribeToTraders()
@@ -65,7 +69,7 @@ class MarketViewModel() : ViewModel() {
             viewModelScope.launch {
                 supabaseApi.checkTrader(name = name)
             }
-            subscribeToBalance(name = name)
+            subscribeToBalance(traderName = name)
         }
     }
 
@@ -202,25 +206,32 @@ class MarketViewModel() : ViewModel() {
         }
     }
 
-    private fun subscribeToBalance(name: String) {
-        getBalanceFlow(name = name)
-            .onEach { balance ->
-                _state.update {
-                    it.copy(balance = balance)
-                }
-            }.launchIn(viewModelScope)
+    private fun subscribeToBalance(traderName: String) {
+        combine(
+            getCashFlow(traderName = traderName),
+            getStockValueFlow(traderName = traderName),
+        ) { cash, stocks ->
+            _state.update {
+                it.copy(
+                    balance = BalanceUi(
+                        cash = cash,
+                        stocks = stocks,
+                    )
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
-    private fun subscribeToStocks(name: String) {
+    private fun subscribeToStocks(traderName: String) {
         val tradesFlow = if (isAdmin()) {
             flowOf(emptyList())
         } else {
-            supabaseApi.getTradesFlow(name = name)
+            supabaseApi.getTradesFlow(traderName = traderName)
         }
         val balanceFlow = if (isAdmin()) {
             flowOf(0)
         } else {
-            getBalanceFlow(name = name)
+            getCashFlow(traderName = traderName)
         }
 
         combine(
@@ -252,99 +263,9 @@ class MarketViewModel() : ViewModel() {
                 it.copy(stocks = stocks)
             }
         }.launchIn(viewModelScope)
-//
-//
-//        stockRepository.getStocksFlow()
-//
-//
-//
-//
-//
-//        combine(
-//            supabaseApi.getsStocksFlow(),
-//            tradesFlow,
-//            balanceFlow,
-//            _state.map { it.day }.distinctUntilChanged(),
-//            _state.map { it.dayTime == DayTime.Evening }.distinctUntilChanged(),
-//            supabaseApi.getTradingAnalyticsFlow(),
-//        ) { values ->
-//            val stocks = values[0] as List<StockRow>
-//            val trades = values[1] as List<TradeRow>
-//            val balance = values[2] as Int
-//            val day = values[3] as Int
-//            val isEvening = values[4] as Boolean
-//            val tradingAnalytics = values[5] as List<TradingAnalyticsRow>
-//
-//            if (_state.value.stocks.isEmpty()) {
-//                createNewList(
-//                    stocks = stocks,
-//                    trades = trades,
-//                    balance = balance,
-//                )
-//            } else {
-//                val dayAnalytics = tradingAnalytics.filter { analytics ->
-//                    isAdmin() && isEvening && analytics.day == day
-//                }
-//                updateStockList(
-//                    stocks = _state.value.stocks,
-//                    updatedStocks = stocks,
-//                    trades = trades,
-//                    dayAnalytics = dayAnalytics,
-//                    balance = balance,
-//                )
-//            }
-//        }.onEach { stocks ->
-//            _state.update {
-//                it.copy(stocks = stocks)
-//            }
-//        }.launchIn(viewModelScope)
     }
 
-//    private fun createNewList(
-//        stocks: List<StockRow>,
-//        trades: List<TradeRow>,
-//        balance: Int,
-//    ): List<Stock> {
-//        return stocks.map { stock ->
-//            Stock(
-//                name = stock.name,
-//                description = stock.description,
-//                priceBuy = stock.priceBuy,
-//                priceSell = stock.priceSell,
-//                count = calculateCount(
-//                    trades = trades,
-//                    stockName = stock.name,
-//                ),
-//                analytics = null,
-//                canBuy = balance > stock.priceBuy,
-//                isProcessing = false,
-//            )
-//        }
-//    }
-
-//    private fun updateStockList(
-//        stocks: List<Stock>,
-//        updatedStocks: List<StockRow>,
-//        trades: List<TradeRow>,
-//        dayAnalytics: List<TradingAnalyticsRow>,
-//        balance: Int,
-//    ): List<Stock> {
-//        return stocks.map { stock ->
-//            val stockAnalytics = dayAnalytics.find { it.stock == stock.name }
-//            val updatedStock = updatedStocks.find { it.name == stock.name }
-//            stock.copy(
-//                priceBuy = updatedStock?.priceBuy ?: stock.priceBuy,
-//                priceSell = updatedStock?.priceSell ?: stock.priceSell,
-//                count = calculateCount(
-//                    trades = trades,
-//                    stockName = stock.name,
-//                ),
-//                analytics = stockAnalytics?.takeIf { it.change != 0 },
-//                canBuy = balance > stock.priceBuy,
-//            )
-//        }
-//    }
-
+    // TODO replace with TradeCount
     private fun calculateCount(
         trades: List<TradeRow>,
         stockName: String,
@@ -359,9 +280,9 @@ class MarketViewModel() : ViewModel() {
         return boughtCount - soldCount
     }
 
-    private fun getBalanceFlow(name: String): Flow<Int> {
-        val balanceFlow = supabaseApi.getBalanceFlow(name = name)
-        val tradesFlow = supabaseApi.getTradesFlow(name = name)
+    private fun getCashFlow(traderName: String): Flow<Int> {
+        val balanceFlow = supabaseApi.getBalanceFlow(traderName = traderName)
+        val tradesFlow = supabaseApi.getTradesFlow(traderName = traderName)
         return combine(
             balanceFlow,
             tradesFlow,
@@ -372,6 +293,15 @@ class MarketViewModel() : ViewModel() {
                 } else {
                     tradeRow.price
                 }
+            }
+        }
+    }
+
+    private fun getStockValueFlow(traderName: String): Flow<Int> {
+        val stockCountFlow = getStockCountListFlowUseCase(traderName = traderName)
+        return stockCountFlow.map { stockCounts ->
+            stockCounts.sumOf { stockCount ->
+                stockCount.count * stockCount.stock.priceSell
             }
         }
     }

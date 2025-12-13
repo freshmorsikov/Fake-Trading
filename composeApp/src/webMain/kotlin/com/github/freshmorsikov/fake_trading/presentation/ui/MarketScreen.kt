@@ -18,6 +18,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.freshmorsikov.fake_trading.presentation.MarketViewModel
+import com.github.freshmorsikov.fake_trading.presentation.model.BalanceUi
 import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
 import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
 import com.github.freshmorsikov.fake_trading.presentation.model.MarketState
@@ -73,7 +74,7 @@ private fun TradingContent(
             day = marketState.day,
             dayTime = marketState.dayTime,
             progress = marketState.progress,
-            isAdmin = marketState.isAdmin
+            balance = marketState.balance
         )
 
         Row(modifier = Modifier.padding(top = 16.dp)) {
@@ -213,7 +214,7 @@ private fun TopInfoCard(
     day: Int,
     dayTime: DayTime,
     progress: Float,
-    isAdmin: Boolean,
+    balance: BalanceUi?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -232,7 +233,7 @@ private fun TopInfoCard(
             dayTime = dayTime,
             progress = progress,
         )
-        if (!isAdmin) {
+        balance?.let {
             HorizontalDivider(
                 modifier = Modifier.padding(top = 16.dp)
             )
@@ -240,9 +241,7 @@ private fun TopInfoCard(
                 modifier = Modifier
                     .padding(top = 16.dp)
                     .fillMaxWidth(),
-                cash = 100,
-                stockValue = 200,
-                total = 300,
+                balance = balance
             )
         }
     }
@@ -305,9 +304,7 @@ private fun DayTime(
 
 @Composable
 private fun Balance(
-    cash: Int,
-    stockValue: Int,
-    total: Int,
+    balance: BalanceUi,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -325,7 +322,7 @@ private fun Balance(
             )
             Text(
                 modifier = Modifier.alignByBaseline(),
-                text = "$cash $CURRENCY",
+                text = "${balance.cash} $CURRENCY",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
             )
@@ -341,7 +338,7 @@ private fun Balance(
             )
             Text(
                 modifier = Modifier.alignByBaseline(),
-                text = "$stockValue $CURRENCY",
+                text = "${balance.stocks} $CURRENCY",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
             )
@@ -357,7 +354,7 @@ private fun Balance(
             )
             Text(
                 modifier = Modifier.alignByBaseline(),
-                text = "$total $CURRENCY",
+                text = "${balance.total} $CURRENCY",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
             )

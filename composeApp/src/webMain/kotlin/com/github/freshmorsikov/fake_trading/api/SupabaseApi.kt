@@ -82,10 +82,10 @@ class SupabaseApi {
             .selectAsFlow(TraderRow::name)
     }
 
-    fun getBalanceFlow(name: String): Flow<Int> {
+    fun getBalanceFlow(traderName: String): Flow<Int> {
         return supabase.from(table = "trader")
             .selectSingleValueAsFlow(primaryKey = TraderRow::name) {
-                TraderRow::name eq name
+                TraderRow::name eq traderName
             }.map { it.balance }
     }
 
@@ -95,12 +95,12 @@ class SupabaseApi {
             .selectAsFlow(primaryKey = TradeRow::id)
     }
 
-    fun getTradesFlow(name: String): Flow<List<TradeRow>> {
+    fun getTradesFlow(traderName: String): Flow<List<TradeRow>> {
         return supabase
             .from("trade")
             .selectAsFlow(
                 primaryKey = TradeRow::id,
-                filter = FilterOperation("trader", FilterOperator.EQ, name)
+                filter = FilterOperation("trader", FilterOperator.EQ, traderName)
             )
     }
 

@@ -15,7 +15,7 @@ data class MarketState(
     val news: List<NewsRow>,
     val traders: List<TraderRow>,
     val stocks: List<StockUi>,
-    val balance: Int,
+    val balance: BalanceUi?,
     val isRefreshEnabled: Boolean,
 ) {
     val day: Int = stepNumber / STEP_IN_DAY + 1
@@ -33,4 +33,11 @@ data class MarketState(
     val isInit: Boolean = name.isEmpty()
     val isAdmin: Boolean = name.lowercase() == ADMIN
     val currentNews: List<NewsRow> = news.drop((day - 1) * NEWS_COUNT).take(NEWS_COUNT)
+}
+
+data class BalanceUi(
+    val cash: Int,
+    val stocks: Int,
+) {
+    val total: Int = cash + stocks
 }

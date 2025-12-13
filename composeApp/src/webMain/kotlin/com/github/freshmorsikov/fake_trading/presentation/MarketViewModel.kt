@@ -223,39 +223,24 @@ class MarketViewModel() : ViewModel() {
     }
 
     private fun subscribeToStocks(traderName: String) {
-        val tradesFlow = if (isAdmin()) {
-            flowOf(emptyList())
-        } else {
-            supabaseApi.getTradesFlow(traderName = traderName)
-        }
-        val balanceFlow = if (isAdmin()) {
-            flowOf(0)
-        } else {
-            getCashFlow(traderName = traderName)
-        }
-
         combine(
-            stockRepository.getStocksFlow(),
-            tradesFlow,
-            balanceFlow,
+            getStockCountListFlowUseCase(traderName = traderName),
+            getCashFlow(traderName = traderName),
             supabaseApi.getStepFlow(),
-        ) { stocks, trades, balance, step ->
-            stocks.map { stock ->
+        ) { stockCountList, balance, step ->
+            stockCountList.map { stockCount ->
                 StockUi(
-                    name = stock.name,
-                    description = stock.description,
-                    priceBuy = stock.priceBuy,
-                    priceSell = stock.priceSell,
-                    count = calculateCount(
-                        trades = trades,
-                        stockName = stock.name,
-                    ),
-                    analytics = stock.analytics.find { analytics ->
+                    name = stockCount.stock.name,
+                    description = stockCount.stock.description,
+                    priceBuy = stockCount.stock.priceBuy,
+                    priceSell = stockCount.stock.priceSell,
+                    count = stockCount.count,
+                    analytics = stockCount.stock.analytics.find { analytics ->
                         analytics.step == step
                     }?.takeIf { analytics ->
                         analytics.change != 0
                     },
-                    canBuy = balance > stock.priceBuy,
+                    canBuy = balance > stockCount.stock.priceBuy,
                 )
             }
         }.onEach { stocks ->
@@ -263,21 +248,6 @@ class MarketViewModel() : ViewModel() {
                 it.copy(stocks = stocks)
             }
         }.launchIn(viewModelScope)
-    }
-
-    // TODO replace with TradeCount
-    private fun calculateCount(
-        trades: List<TradeRow>,
-        stockName: String,
-    ): Int {
-        val boughtCount = trades.count { trade ->
-            trade.stock == stockName && trade.buy
-        }
-        val soldCount = trades.count { trade ->
-            trade.stock == stockName && !trade.buy
-        }
-
-        return boughtCount - soldCount
     }
 
     private fun getCashFlow(traderName: String): Flow<Int> {

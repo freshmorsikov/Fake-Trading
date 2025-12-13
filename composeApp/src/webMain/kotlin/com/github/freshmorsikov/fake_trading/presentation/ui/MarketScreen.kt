@@ -22,6 +22,7 @@ import com.github.freshmorsikov.fake_trading.presentation.model.BalanceUi
 import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
 import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
 import com.github.freshmorsikov.fake_trading.presentation.model.MarketState
+import com.github.freshmorsikov.fake_trading.presentation.model.StepUi
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -38,7 +39,7 @@ fun MarketScreen(viewModel: MarketViewModel = viewModel { MarketViewModel() }) {
             val stateValue = state
 
             Box(modifier = Modifier.padding(16.dp)) {
-                if (stateValue.isInit) {
+                if (stateValue.traderName.isNone) {
                     NameInput(
                         onSave = { name ->
                             viewModel.setName(name = name)
@@ -71,9 +72,7 @@ private fun TradingContent(
     Column(modifier = Modifier.fillMaxWidth()) {
         TopInfoCard(
             modifier = Modifier.fillMaxWidth(),
-            day = marketState.day,
-            dayTime = marketState.dayTime,
-            progress = marketState.progress,
+            step = marketState.step,
             balance = marketState.balance
         )
 
@@ -103,7 +102,7 @@ private fun TradingContent(
                 }
             }
 
-            if (marketState.isAdmin) {
+            if (marketState.traderName.isAdmin) {
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -134,25 +133,25 @@ private fun TradingContent(
             }
         }
 
-        if (marketState.isAdmin) {
+        if (marketState.traderName.isAdmin) {
             Row(
                 modifier = Modifier.padding(top = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Button(
                     onClick = { onPreviousClick() },
-                    enabled = marketState.isPreviousStepAvailable,
+                    enabled = marketState.step.isPreviousStepAvailable,
                 ) {
                     Text(text = "Назад")
                 }
                 Button(
                     onClick = { onNextClick() },
-                    enabled = marketState.isNextStepAvailable,
+                    enabled = marketState.step.isNextStepAvailable,
                 ) {
                     Text(text = "Продолжить")
                 }
             }
-            if (marketState.stepNumber == 0) {
+            if (marketState.step.number == 0) {
                 Button(
                     modifier = Modifier.padding(top = 16.dp),
                     onClick = { onNewsClick() },
@@ -211,9 +210,7 @@ private fun NameInput(
 
 @Composable
 private fun TopInfoCard(
-    day: Int,
-    dayTime: DayTime,
-    progress: Float,
+    step: StepUi,
     balance: BalanceUi?,
     modifier: Modifier = Modifier,
 ) {
@@ -229,9 +226,7 @@ private fun TopInfoCard(
     ) {
         DayTime(
             modifier = Modifier.fillMaxWidth(),
-            day = day,
-            dayTime = dayTime,
-            progress = progress,
+            step = step,
         )
         balance?.let {
             HorizontalDivider(
@@ -249,16 +244,14 @@ private fun TopInfoCard(
 
 @Composable
 private fun DayTime(
-    day: Int,
-    dayTime: DayTime,
-    progress: Float,
+    step: StepUi,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val dayTimeText = when (dayTime) {
+        val dayTimeText = when (step.dayTime) {
             DayTime.Morning -> "Утро"
             DayTime.Noon -> "Работа"
             DayTime.Evening -> "Вечер"
@@ -266,7 +259,7 @@ private fun DayTime(
         val dayText = buildAnnotatedString {
             append("День ")
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(day.toString())
+                append(step.day.toString())
             }
             append(" ($dayTimeText)")
         }
@@ -276,7 +269,7 @@ private fun DayTime(
             color = MaterialTheme.colorScheme.onBackground,
         )
 
-        val action = when (dayTime) {
+        val action = when (step.dayTime) {
             DayTime.Morning -> "Читаем новости"
             DayTime.Noon -> "Торгуем стонксами"
             DayTime.Evening -> "Подводим итоги"
@@ -293,7 +286,7 @@ private fun DayTime(
                 .padding(top = 8.dp)
                 .height(height = 8.dp)
                 .fillMaxWidth(),
-            progress = { progress },
+            progress = { step.progress },
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.primaryContainer,
             gapSize = (-8).dp,

@@ -7,10 +7,10 @@ import com.github.freshmorsikov.fake_trading.ai.TradingAnalytics
 import com.github.freshmorsikov.fake_trading.ai.TradingAnalyticsGenerator
 import com.github.freshmorsikov.fake_trading.api.SupabaseApi
 import com.github.freshmorsikov.fake_trading.api.model.StockRow
-import com.github.freshmorsikov.fake_trading.api.model.TradeRow
 import com.github.freshmorsikov.fake_trading.api.model.TradingAnalyticsRow
 import com.github.freshmorsikov.fake_trading.data.StockRepository
 import com.github.freshmorsikov.fake_trading.domain.GetStockCountListFlowUseCase
+import com.github.freshmorsikov.fake_trading.domain.model.TraderName
 import com.github.freshmorsikov.fake_trading.presentation.model.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -37,8 +37,8 @@ class MarketViewModel() : ViewModel() {
 
     private val _state = MutableStateFlow(
         MarketState(
-            name = "",
-            stepNumber = 0,
+            traderName = TraderName.None,
+            step = StepUi(number = 0),
             news = emptyList(),
             traders = emptyList(),
             stocks = emptyList(),
@@ -48,40 +48,37 @@ class MarketViewModel() : ViewModel() {
     )
     val state = _state.asStateFlow()
 
-    private fun isAdmin(): Boolean {
-        return _state.value.isAdmin
-    }
-
     init {
         subscribeToStep()
     }
 
     fun setName(name: String) {
+        val traderName = TraderName(name = name)
         _state.update {
-            it.copy(name = name)
+            it.copy(traderName = traderName)
         }
 
-        subscribeToStocks(traderName = name)
-        if (isAdmin()) {
+        subscribeToStocks(traderName = traderName)
+        if (_state.value.traderName.isAdmin) {
             subscribeToNews()
             subscribeToTraders()
         } else {
             viewModelScope.launch {
-                supabaseApi.checkTrader(name = name)
+                supabaseApi.checkTrader(name = traderName.name)
             }
-            subscribeToBalance(traderName = name)
+            subscribeToBalance(traderName = traderName)
         }
     }
 
     fun goToPreviousStep() {
         viewModelScope.launch {
-            supabaseApi.updateStep(step = _state.value.stepNumber - 1)
+            supabaseApi.updateStep(step = _state.value.step.number - 1)
         }
     }
 
     fun goToNextStep() {
         viewModelScope.launch {
-            supabaseApi.updateStep(step = _state.value.stepNumber + 1)
+            supabaseApi.updateStep(step = _state.value.step.number + 1)
         }
     }
 
@@ -156,10 +153,10 @@ class MarketViewModel() : ViewModel() {
             val stock = stockRepository.getStockByName(name = stockName) ?: return@launch
             supabaseApi.createTrade(
                 stockName = stockName,
-                traderName = _state.value.name,
+                traderName = _state.value.traderName.name,
                 buy = true,
                 price = stock.priceBuy,
-                step = _state.value.stepNumber,
+                step = _state.value.step.number,
             )
         }
     }
@@ -169,10 +166,10 @@ class MarketViewModel() : ViewModel() {
             val stock = stockRepository.getStockByName(name = stockName) ?: return@launch
             supabaseApi.createTrade(
                 stockName = stockName,
-                traderName = _state.value.name,
+                traderName = _state.value.traderName.name,
                 buy = false,
                 price = stock.priceSell,
-                step = _state.value.stepNumber,
+                step = _state.value.step.number,
             )
         }
     }
@@ -181,7 +178,11 @@ class MarketViewModel() : ViewModel() {
         supabaseApi.getStepFlow()
             .onEach { step ->
                 _state.update {
-                    it.copy(stepNumber = step)
+                    it.copy(
+                        step = StepUi(
+                            number = step
+                        )
+                    )
                 }
             }.launchIn(viewModelScope)
     }
@@ -206,7 +207,7 @@ class MarketViewModel() : ViewModel() {
         }
     }
 
-    private fun subscribeToBalance(traderName: String) {
+    private fun subscribeToBalance(traderName: TraderName) {
         combine(
             getCashFlow(traderName = traderName),
             getStockValueFlow(traderName = traderName),
@@ -222,12 +223,12 @@ class MarketViewModel() : ViewModel() {
         }.launchIn(viewModelScope)
     }
 
-    private fun subscribeToStocks(traderName: String) {
+    private fun subscribeToStocks(traderName: TraderName) {
         combine(
             getStockCountListFlowUseCase(traderName = traderName),
             getCashFlow(traderName = traderName),
             supabaseApi.getStepFlow(),
-        ) { stockCountList, balance, step ->
+        ) { stockCountList, cash, step ->
             stockCountList.map { stockCount ->
                 StockUi(
                     name = stockCount.stock.name,
@@ -240,7 +241,7 @@ class MarketViewModel() : ViewModel() {
                     }?.takeIf { analytics ->
                         analytics.change != 0
                     },
-                    canBuy = balance > stockCount.stock.priceBuy,
+                    canBuy = cash > stockCount.stock.priceBuy,
                 )
             }
         }.onEach { stocks ->
@@ -250,9 +251,13 @@ class MarketViewModel() : ViewModel() {
         }.launchIn(viewModelScope)
     }
 
-    private fun getCashFlow(traderName: String): Flow<Int> {
-        val balanceFlow = supabaseApi.getBalanceFlow(traderName = traderName)
-        val tradesFlow = supabaseApi.getTradesFlow(traderName = traderName)
+    private fun getCashFlow(traderName: TraderName): Flow<Int> {
+        val balanceFlow = if (traderName.isAdmin) {
+            flowOf(0)
+        } else {
+            supabaseApi.getBalanceFlow(traderName = traderName.name)
+        }
+        val tradesFlow = supabaseApi.getTradesFlow(traderName = traderName.name)
         return combine(
             balanceFlow,
             tradesFlow,
@@ -267,7 +272,7 @@ class MarketViewModel() : ViewModel() {
         }
     }
 
-    private fun getStockValueFlow(traderName: String): Flow<Int> {
+    private fun getStockValueFlow(traderName: TraderName): Flow<Int> {
         val stockCountFlow = getStockCountListFlowUseCase(traderName = traderName)
         return stockCountFlow.map { stockCounts ->
             stockCounts.sumOf { stockCount ->

@@ -1,28 +1,20 @@
 package com.github.freshmorsikov.fake_trading.presentation.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.freshmorsikov.fake_trading.presentation.MarketViewModel
-import com.github.freshmorsikov.fake_trading.presentation.model.BalanceUi
-import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
-import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
 import com.github.freshmorsikov.fake_trading.presentation.model.MarketState
-import com.github.freshmorsikov.fake_trading.presentation.model.StepUi
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -75,61 +67,27 @@ private fun TradingContent(
             step = marketState.step,
             balance = marketState.balance
         )
-
-        Row(modifier = Modifier.padding(top = 16.dp)) {
-            Column(modifier = Modifier.weight(1f)) {
-                if (marketState.currentNews.isNotEmpty()) {
-                    Text(
-                        modifier = Modifier.padding(bottom = 4.dp),
-                        text = "Стонксы",
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                }
-                marketState.stocks.forEach { stock ->
-                    Column {
-                        StockItem(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            stock = stock,
-                            onBuy = {
-                                onBuyClick(stock.name)
-                            },
-                            onSell = {
-                                onSellClick(stock.name)
-                            },
-                        )
-                        HorizontalDivider()
-                    }
-                }
-            }
-
+        Row(
+            modifier = Modifier.padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             if (marketState.traderName.isAdmin) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 16.dp)
-                ) {
-                    if (marketState.currentNews.isNotEmpty()) {
-                        Text(
-                            modifier = Modifier.padding(bottom = 4.dp),
-                            text = "Новости",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                    }
-                    marketState.currentNews.forEach { news ->
-                        Text(text = news.title)
-                    }
-
-                    if (marketState.traders.isNotEmpty()) {
-                        Text(
-                            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
-                            text = "Трейдеры",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                    }
-                    marketState.traders.forEach { trader ->
-                        Text(text = "${trader.name}: ${trader.balance}")
-                    }
-                }
+                NewsCard(
+                    modifier = Modifier.weight(1f),
+                    news = marketState.currentNews,
+                )
+            }
+            StocksCard(
+                modifier = Modifier.weight(2f),
+                stocks = marketState.stocks,
+                onBuyClick = onBuyClick,
+                onSellClick = onSellClick,
+            )
+            if (marketState.traderName.isAdmin) {
+                TradersCard(
+                    modifier = Modifier.weight(1f),
+                    traders = marketState.traders,
+                )
             }
         }
 
@@ -204,153 +162,6 @@ private fun NameInput(
             ) {
                 Text(text = "Начать")
             }
-        }
-    }
-}
-
-@Composable
-private fun TopInfoCard(
-    step: StepUi,
-    balance: BalanceUi?,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .border(
-                width = 1.dp,
-                color = Color.LightGray,
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        DayTime(
-            modifier = Modifier.fillMaxWidth(),
-            step = step,
-        )
-        balance?.let {
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 16.dp)
-            )
-            Balance(
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .fillMaxWidth(),
-                balance = balance
-            )
-        }
-    }
-}
-
-@Composable
-private fun DayTime(
-    step: StepUi,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        val dayTimeText = when (step.dayTime) {
-            DayTime.Morning -> "Утро"
-            DayTime.Noon -> "Работа"
-            DayTime.Evening -> "Вечер"
-        }
-        val dayText = buildAnnotatedString {
-            append("День ")
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(step.day.toString())
-            }
-            append(" ($dayTimeText)")
-        }
-        Text(
-            text = dayText,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        val action = when (step.dayTime) {
-            DayTime.Morning -> "Читаем новости"
-            DayTime.Noon -> "Торгуем стонксами"
-            DayTime.Evening -> "Подводим итоги"
-        }
-        Text(
-            modifier = Modifier.padding(top = 4.dp),
-            text = action,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
-        LinearProgressIndicator(
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .height(height = 8.dp)
-                .fillMaxWidth(),
-            progress = { step.progress },
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.primaryContainer,
-            gapSize = (-8).dp,
-            drawStopIndicator = {},
-        )
-    }
-}
-
-@Composable
-private fun Balance(
-    balance: BalanceUi,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.sizeIn(maxWidth = 600.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row {
-            Text(
-                modifier = Modifier
-                    .alignByBaseline()
-                    .weight(1f),
-                text = "Кэш",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                modifier = Modifier.alignByBaseline(),
-                text = "${balance.cash} $CURRENCY",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Row {
-            Text(
-                modifier = Modifier
-                    .alignByBaseline()
-                    .weight(1f),
-                text = "Стонксы",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                modifier = Modifier.alignByBaseline(),
-                text = "${balance.stocks} $CURRENCY",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Row {
-            Text(
-                modifier = Modifier
-                    .alignByBaseline()
-                    .weight(1f),
-                text = "Всего",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
-                modifier = Modifier.alignByBaseline(),
-                text = "${balance.total} $CURRENCY",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
-            )
         }
     }
 }

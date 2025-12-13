@@ -7,7 +7,6 @@ import com.github.freshmorsikov.fake_trading.domain.model.Stock
 import com.github.freshmorsikov.fake_trading.domain.model.TraderName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 
 data class StockCount(

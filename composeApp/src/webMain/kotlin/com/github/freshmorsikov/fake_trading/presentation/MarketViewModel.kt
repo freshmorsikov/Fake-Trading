@@ -16,6 +16,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.collections.map
 
 class MarketViewModel() : ViewModel() {
 
@@ -190,8 +191,9 @@ class MarketViewModel() : ViewModel() {
     private fun subscribeToNews() {
         supabaseApi.getNewsFlow()
             .onEach { news ->
+                val newsTitles = news.map { it.title }
                 _state.update {
-                    it.copy(news = news)
+                    it.copy(news = newsTitles)
                 }
             }.launchIn(viewModelScope)
     }
@@ -200,8 +202,14 @@ class MarketViewModel() : ViewModel() {
         viewModelScope.launch {
             supabaseApi.getTraderFlow()
                 .onEach { traders ->
+                    val uiTraders = traders.map { trader ->
+                        TraderUi(
+                            name = trader.name,
+                            balance = trader.balance,
+                        )
+                    }
                     _state.update {
-                        it.copy(traders = traders)
+                        it.copy(traders = uiTraders)
                     }
                 }.launchIn(viewModelScope)
         }

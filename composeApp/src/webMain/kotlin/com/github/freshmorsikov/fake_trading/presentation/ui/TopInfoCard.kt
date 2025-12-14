@@ -1,12 +1,7 @@
 package com.github.freshmorsikov.fake_trading.presentation.ui
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
@@ -30,32 +25,42 @@ import com.github.freshmorsikov.fake_trading.presentation.model.StepUi
 fun TopInfoCard(
     step: StepUi,
     balance: BalanceUi?,
+    isAdmin: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .border(
-                width = 1.dp,
-                color = Color.LightGray,
-                shape = RoundedCornerShape(16.dp)
+    Row(modifier = modifier) {
+        if (isAdmin) {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .border(
+                    width = 1.dp,
+                    color = Color.LightGray,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            DayTime(
+                modifier = Modifier.fillMaxWidth(),
+                step = step,
             )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        DayTime(
-            modifier = Modifier.fillMaxWidth(),
-            step = step,
-        )
-        balance?.let {
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 16.dp)
-            )
-            Balance(
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .fillMaxWidth(),
-                balance = balance
-            )
+            balance?.let {
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                Balance(
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth(),
+                    balance = balance
+                )
+            }
+        }
+        if (isAdmin) {
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }

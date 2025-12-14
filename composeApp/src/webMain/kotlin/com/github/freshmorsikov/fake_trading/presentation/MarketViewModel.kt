@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.collections.map
+import kotlin.random.Random
 
 class MarketViewModel() : ViewModel() {
 
@@ -191,9 +192,17 @@ class MarketViewModel() : ViewModel() {
     private fun subscribeToNews() {
         supabaseApi.getNewsFlow()
             .onEach { news ->
-                val newsTitles = news.map { it.title }
+                val newsUi = news.map {
+                    NewsUi(
+                        title = it.title,
+                        hours = Random.nextInt(1, 10),
+                        likes = Random.nextInt(20, 200),
+                        comments = Random.nextInt(1, 20),
+                        views = Random.nextInt(2, 10) * 100,
+                    )
+                }
                 _state.update {
-                    it.copy(news = newsTitles)
+                    it.copy(news = newsUi)
                 }
             }.launchIn(viewModelScope)
     }

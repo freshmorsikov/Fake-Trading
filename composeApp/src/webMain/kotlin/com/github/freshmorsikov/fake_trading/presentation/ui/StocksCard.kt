@@ -15,28 +15,25 @@ fun StocksCard(
     stocks: List<StockUi>,
     onBuyClick: (String) -> Unit,
     onSellClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         Text(
-            modifier = Modifier.padding(bottom = 4.dp),
             text = "Стонксы",
             style = MaterialTheme.typography.titleLarge,
         )
         stocks.forEach { stock ->
-            Column {
-                StockItem(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    stock = stock,
-                    onBuy = {
-                        onBuyClick(stock.name)
-                    },
-                    onSell = {
-                        onSellClick(stock.name)
-                    },
-                )
-                HorizontalDivider()
-            }
+            StockItem(
+                modifier = Modifier.padding(vertical = 8.dp),
+                stock = stock,
+                onBuy = {
+                    onBuyClick(stock.name)
+                },
+                onSell = {
+                    onSellClick(stock.name)
+                },
+            )
+            HorizontalDivider()
         }
     }
 }

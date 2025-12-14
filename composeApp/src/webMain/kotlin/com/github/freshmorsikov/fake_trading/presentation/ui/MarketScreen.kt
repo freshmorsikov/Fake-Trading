@@ -65,7 +65,8 @@ private fun TradingContent(
         TopInfoCard(
             modifier = Modifier.fillMaxWidth(),
             step = marketState.step,
-            balance = marketState.balance
+            balance = marketState.balance,
+            isAdmin = marketState.traderName.isAdmin,
         )
         Row(
             modifier = Modifier.padding(top = 16.dp),

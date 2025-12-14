@@ -10,14 +10,18 @@ const val CURRENCY = "₣m"
 data class MarketState(
     val traderName: TraderName,
     val step: StepUi,
-    val news: List<String>,
+    val news: List<NewsUi>,
     val traders: List<TraderUi>,
     val stocks: List<StockUi>,
     val balance: BalanceUi?,
     val isRefreshEnabled: Boolean,
 ) {
     val isTradingAvailable = step.dayTime == DayTime.Noon
-    val currentNews: List<String> = news.drop((step.day - 1) * NEWS_COUNT).take(NEWS_COUNT)
+    val currentNews: List<NewsUi> =
+        news
+            .drop((step.day - 1) * NEWS_COUNT)
+            .take(NEWS_COUNT)
+            .sortedBy { it.hours }
 }
 
 data class BalanceUi(
@@ -45,4 +49,12 @@ data class StepUi(
 data class TraderUi(
     val name: String,
     val balance: Int,
+)
+
+data class NewsUi(
+    val title: String,
+    val hours: Int,
+    val likes: Int,
+    val comments: Int,
+    val views: Int,
 )

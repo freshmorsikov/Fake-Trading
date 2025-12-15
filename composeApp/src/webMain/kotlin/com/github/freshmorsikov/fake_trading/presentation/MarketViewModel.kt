@@ -65,15 +65,16 @@ class MarketViewModel() : ViewModel() {
             it.copy(traderName = traderName)
         }
 
-        subscribeToStocks(traderName = traderName)
         if (_state.value.traderName.isAdmin) {
             subscribeToNews()
             subscribeToTraders()
+            subscribeToStocks(traderName = traderName)
         } else {
             viewModelScope.launch {
                 supabaseApi.checkTrader(name = traderName.name)
+                subscribeToBalance(traderName = traderName)
+                subscribeToStocks(traderName = traderName)
             }
-            subscribeToBalance(traderName = traderName)
         }
     }
 
@@ -209,34 +210,43 @@ class MarketViewModel() : ViewModel() {
 
     private fun subscribeToTraders() {
         viewModelScope.launch {
-            supabaseApi.getTraderFlow()
-                .onEach { traders ->
-                    val uiTraders = traders.map { trader ->
-                        TraderUi(
-                            name = trader.name,
-                            balance = trader.balance,
-                        )
+            combine(
+                supabaseApi.getTradersFlow(),
+                supabaseApi.getTradesFlow(),
+                getStockCountListFlowUseCase()
+            ) { traders, trades, stockCount ->
+                val traderUis = traders.map { trader ->
+                    val traderTrades = trades.filter { trade ->
+                        trade.trader == trader.name
                     }
-                    _state.update {
-                        it.copy(traders = uiTraders)
+                    val cash = trader.balance + traderTrades.sumOf { tradeRow ->
+                        if (tradeRow.buy) {
+                            -tradeRow.price
+                        } else {
+                            tradeRow.price
+                        }
                     }
-                }.launchIn(viewModelScope)
+                    val traderStockCount = stockCount.filter { stock ->
+                        stock.traderName == trader.name
+                    }
+                    val stockValue = traderStockCount.sumOf { stockCount ->
+                        stockCount.count * stockCount.stock.priceSell
+                    }
+                    TraderUi(
+                        name = trader.name,
+                        balance = cash + stockValue,
+                    )
+                }
+                _state.update {
+                    it.copy(traders = traderUis)
+                }
+            }.launchIn(viewModelScope)
         }
     }
 
     private fun subscribeToBalance(traderName: TraderName) {
-        combine(
-            getCashFlow(traderName = traderName),
-            getStockValueFlow(traderName = traderName),
-        ) { cash, stocks ->
-            _state.update {
-                it.copy(
-                    balance = BalanceUi(
-                        cash = cash,
-                        stocks = stocks,
-                    )
-                )
-            }
+        getBalanceFlow(traderName).onEach { balance ->
+            _state.update { it.copy(balance = balance) }
         }.launchIn(viewModelScope)
     }
 
@@ -267,6 +277,18 @@ class MarketViewModel() : ViewModel() {
                 it.copy(stocks = stocks)
             }
         }.launchIn(viewModelScope)
+    }
+
+    private fun getBalanceFlow(traderName: TraderName): Flow<BalanceUi> {
+        return combine(
+            getCashFlow(traderName = traderName),
+            getStockValueFlow(traderName = traderName),
+        ) { cash, stocks ->
+            BalanceUi(
+                cash = cash,
+                stocks = stocks
+            )
+        }
     }
 
     private fun getCashFlow(traderName: TraderName): Flow<Int> {

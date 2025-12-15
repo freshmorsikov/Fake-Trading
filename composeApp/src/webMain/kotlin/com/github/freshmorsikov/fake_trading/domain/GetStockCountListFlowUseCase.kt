@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 
+data class TraderStockCount(
+    val traderName: String,
+    val stock: Stock,
+    val count: Int,
+)
+
 data class StockCount(
     val stock: Stock,
     val count: Int,
@@ -38,6 +44,27 @@ class GetStockCountListFlowUseCase() {
                     count = filtered.count()
                 )
             }
+        }
+    }
+
+    operator fun invoke(): Flow<List<TraderStockCount>> {
+        return combine(
+            stockRepository.getStocksFlow(),
+            supabaseApi.getTradesFlow(),
+        ) { stocks, trades ->
+            trades.groupBy { trade -> trade.trader }
+                .flatMap { (trader, traderTrades) ->
+                    stocks.map { stock ->
+                        val filtered = traderTrades.filter { trade ->
+                            trade.stock == stock.name
+                        }
+                        TraderStockCount(
+                            traderName = trader,
+                            stock = stock,
+                            count = filtered.count()
+                        )
+                    }
+                }
         }
     }
 

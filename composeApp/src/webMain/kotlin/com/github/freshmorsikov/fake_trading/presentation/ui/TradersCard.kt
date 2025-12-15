@@ -21,7 +21,8 @@ fun TradersCard(
     Column(modifier = modifier) {
         Text(
             text = "Трейдеры",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Column(
             modifier = Modifier.padding(top = 16.dp),

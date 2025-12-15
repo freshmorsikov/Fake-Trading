@@ -76,7 +76,7 @@ class SupabaseApi {
         }
     }
 
-    fun getTraderFlow(): Flow<List<TraderRow>> {
+    fun getTradersFlow(): Flow<List<TraderRow>> {
         return supabase
             .from("trader")
             .selectAsFlow(TraderRow::name)

@@ -9,7 +9,9 @@ import com.github.freshmorsikov.fake_trading.api.SupabaseApi
 import com.github.freshmorsikov.fake_trading.api.model.StockRow
 import com.github.freshmorsikov.fake_trading.api.model.TradingAnalyticsRow
 import com.github.freshmorsikov.fake_trading.data.StockRepository
+import com.github.freshmorsikov.fake_trading.domain.GetStepFlow
 import com.github.freshmorsikov.fake_trading.domain.GetStockCountListFlowUseCase
+import com.github.freshmorsikov.fake_trading.domain.model.Step
 import com.github.freshmorsikov.fake_trading.domain.model.TraderName
 import com.github.freshmorsikov.fake_trading.presentation.model.*
 import kotlinx.coroutines.coroutineScope
@@ -36,11 +38,14 @@ class MarketViewModel() : ViewModel() {
     private val getStockCountListFlowUseCase by lazy {
         GetStockCountListFlowUseCase()
     }
+    private val getStepFlow by lazy {
+        GetStepFlow()
+    }
 
     private val _state = MutableStateFlow(
         MarketState(
             traderName = TraderName.None,
-            step = StepUi(number = 0),
+            step = Step(number = 0),
             news = emptyList(),
             traders = emptyList(),
             stocks = emptyList(),
@@ -177,16 +182,11 @@ class MarketViewModel() : ViewModel() {
     }
 
     private fun subscribeToStep() {
-        supabaseApi.getStepFlow()
-            .onEach { step ->
-                _state.update {
-                    it.copy(
-                        step = StepUi(
-                            number = step
-                        )
-                    )
-                }
-            }.launchIn(viewModelScope)
+        getStepFlow().onEach { step ->
+            _state.update {
+                it.copy(step = step)
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun subscribeToNews() {
@@ -244,7 +244,7 @@ class MarketViewModel() : ViewModel() {
         combine(
             getStockCountListFlowUseCase(traderName = traderName),
             getCashFlow(traderName = traderName),
-            supabaseApi.getStepFlow(),
+            getStepFlow(),
         ) { stockCountList, cash, step ->
             stockCountList.map { stockCount ->
                 StockUi(
@@ -254,11 +254,12 @@ class MarketViewModel() : ViewModel() {
                     priceSell = stockCount.stock.priceSell,
                     count = stockCount.count,
                     analytics = stockCount.stock.analytics.find { analytics ->
-                        analytics.step == step
+                        analytics.step == step.number
                     }?.takeIf { analytics ->
                         analytics.change != 0
                     },
-                    canBuy = cash > stockCount.stock.priceBuy,
+                    haveEnoughCash = cash > stockCount.stock.priceBuy,
+                    isTradingAvailable = step.dayTime == DayTime.Noon,
                 )
             }
         }.onEach { stocks ->

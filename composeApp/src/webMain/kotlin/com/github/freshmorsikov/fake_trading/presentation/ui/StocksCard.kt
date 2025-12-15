@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.github.freshmorsikov.fake_trading.presentation.model.StockUi
 
@@ -20,7 +21,10 @@ fun StocksCard(
     Column(modifier = modifier) {
         Text(
             text = "Стонксы",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = MaterialTheme.colorScheme.onBackground,
         )
         stocks.forEach { stock ->
             StockItem(

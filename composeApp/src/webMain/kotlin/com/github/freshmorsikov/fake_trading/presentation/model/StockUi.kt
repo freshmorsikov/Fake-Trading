@@ -9,8 +9,9 @@ data class StockUi(
     val priceSell: Int,
     val count: Int,
     val analytics: CommonTradingAnalytics?,
-    val canBuy: Boolean,
+    val haveEnoughCash: Boolean,
+    val isTradingAvailable: Boolean,
 ) {
-    val isBuyEnabled: Boolean = canBuy
-    val isSellEnabled: Boolean = count > 0
+    val isBuyEnabled: Boolean = haveEnoughCash && isTradingAvailable
+    val isSellEnabled: Boolean = count > 0 && isTradingAvailable
 }

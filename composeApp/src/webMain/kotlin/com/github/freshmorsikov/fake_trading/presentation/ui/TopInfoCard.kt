@@ -16,14 +16,14 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.github.freshmorsikov.fake_trading.domain.model.Step
 import com.github.freshmorsikov.fake_trading.presentation.model.BalanceUi
 import com.github.freshmorsikov.fake_trading.presentation.model.CURRENCY
 import com.github.freshmorsikov.fake_trading.presentation.model.DayTime
-import com.github.freshmorsikov.fake_trading.presentation.model.StepUi
 
 @Composable
 fun TopInfoCard(
-    step: StepUi,
+    step: Step,
     balance: BalanceUi?,
     isAdmin: Boolean,
     modifier: Modifier = Modifier,
@@ -67,7 +67,7 @@ fun TopInfoCard(
 
 @Composable
 private fun DayTime(
-    step: StepUi,
+    step: Step,
     modifier: Modifier = Modifier,
 ) {
     Column(

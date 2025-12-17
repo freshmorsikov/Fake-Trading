@@ -3,6 +3,7 @@ package com.github.freshmorsikov.fake_trading.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.freshmorsikov.fake_trading.ai.NewsGenerator
+import com.github.freshmorsikov.fake_trading.ai.PriceImpact
 import com.github.freshmorsikov.fake_trading.ai.TradingAnalytics
 import com.github.freshmorsikov.fake_trading.ai.TradingAnalyticsGenerator
 import com.github.freshmorsikov.fake_trading.api.SupabaseApi
@@ -118,24 +119,23 @@ class MarketViewModel() : ViewModel() {
         supabaseApi.deleteTradingAnalytics()
 
         val stocks = supabaseApi.getsStocksFlow().first()
-
-        for (step in 2 until (DAYS_COUNT * STEP_IN_DAY) step STEP_IN_DAY) {
+        for (i in 0 until DAYS_COUNT) {
             launch {
-                val newsPortion = news.drop(step).take(NEWS_COUNT)
+                val newsPortion = news.drop(i * NEWS_COUNT).take(NEWS_COUNT)
 
-                delay(step * 500L)
+                delay(i * 500L)
                 val tradingAnalytics = tradingAnalyticsGenerator.generateTradingAnalytics(
                     stocks = stocks,
                     news = newsPortion
                 )
 
                 tradingAnalytics?.let {
-                    val tradingAnalyticsRows = stocks.mapIndexed { i, stock ->
+                    val tradingAnalyticsRows = stocks.mapIndexed { stockId, stock ->
                         stock.toTradingAnalytics(
                             tradingAnalytics = tradingAnalytics.find {
-                                it.companyId == i
+                                it.companyId == stockId
                             },
-                            step = step,
+                            step = i * STEP_IN_DAY + 2,
                         )
                     }
                     supabaseApi.saveTradingAnalytics(tradingAnalytics = tradingAnalyticsRows)
@@ -150,7 +150,16 @@ class MarketViewModel() : ViewModel() {
     ): TradingAnalyticsRow {
         return TradingAnalyticsRow(
             stock = name,
-            change = tradingAnalytics?.percentChange ?: 0,
+            change = when (tradingAnalytics?.priceImpact) {
+                PriceImpact.StronglyNegative -> Random.nextInt(-30, -20)
+                PriceImpact.ModeratelyNegative -> Random.nextInt(-20, -10)
+                PriceImpact.SlightlyNegative -> Random.nextInt(-10, -5)
+                PriceImpact.None -> 0
+                PriceImpact.SlightlyPositive -> Random.nextInt(5, 10)
+                PriceImpact.ModeratelyPositive -> Random.nextInt(10, 20)
+                PriceImpact.StronglyPositive -> Random.nextInt(20, 30)
+                else -> 0
+            },
             note = tradingAnalytics?.shortNote ?: "-",
             step = step,
         )

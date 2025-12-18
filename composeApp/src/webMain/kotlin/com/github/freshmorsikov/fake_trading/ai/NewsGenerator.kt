@@ -5,7 +5,6 @@ import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import ai.koog.prompt.structure.executeStructured
-import ai.koog.prompt.structure.json.JsonStructuredData
 import fake_trading.composeApp.BuildConfig
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -49,11 +48,6 @@ class NewsGenerator {
 
     suspend fun generateNews(count: Int): List<String>? {
         val promptExecutor = simpleOpenAIExecutor(BuildConfig.OPENAI_API_KEY)
-//        val newsStructure = JsonStructuredData.createJsonStructure<NewsResponse>(
-//            schemaFormat = JsonSchemaGenerator.SchemaFormat.JsonSchema,
-//            examples = newsExamples,
-//            schemaType = JsonStructuredData.JsonSchemaType.SIMPLE
-//        )
         val generatedNews = promptExecutor.executeStructured(
             prompt = prompt("structured-data") {
                 system(
@@ -69,9 +63,8 @@ class NewsGenerator {
                 )
                 user("Сгенерируй $count новостей")
             },
-            model = OpenAIModels.Chat.GPT4_1,
+            model = OpenAIModels.Chat.GPT5_1,
             examples = newsExamples,
-            //structure = newsStructure,
         )
 
         return generatedNews.getOrNull()?.structure?.newsTitles

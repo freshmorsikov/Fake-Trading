@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -19,6 +20,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
 import com.github.freshmorsikov.fake_trading.core.ui.LocalCompact
 import com.github.freshmorsikov.fake_trading.core.ui.rememberButtonState
 import com.github.freshmorsikov.fake_trading.domain.model.CommonTradingAnalytics
@@ -45,6 +49,10 @@ fun StockItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = spacedBy(4.dp),
             ) {
+                StockIcon(
+                    modifier = Modifier.size(64.dp),
+                    icon = stock.icon,
+                )
                 StockTitle(
                     modifier = Modifier.weight(1f),
                     stockName = stock.name,
@@ -70,6 +78,10 @@ fun StockItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = spacedBy(4.dp),
         ) {
+            StockIcon(
+                modifier = Modifier.size(64.dp),
+                icon = stock.icon,
+            )
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = spacedBy(4.dp),
@@ -93,6 +105,20 @@ fun StockItem(
             )
         }
     }
+}
+
+@Composable
+private fun StockIcon(
+    icon: String,
+    modifier: Modifier = Modifier,
+) {
+    AsyncImage(
+        modifier = modifier,
+        model = ImageRequest.Builder(LocalPlatformContext.current)
+            .data(data = icon)
+            .build(),
+        contentDescription = "StockIcon",
+    )
 }
 
 @Composable
@@ -188,7 +214,11 @@ private fun StockAnalytics(
         } else {
             RedColor
         }
-        val sign = if (analytics.change > 0) { "+" } else { "-" }
+        val sign = if (analytics.change > 0) {
+            "+"
+        } else {
+            "-"
+        }
         withStyle(
             style = SpanStyle(
                 color = color,

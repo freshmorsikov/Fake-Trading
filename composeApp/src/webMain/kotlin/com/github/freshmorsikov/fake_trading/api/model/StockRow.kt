@@ -8,4 +8,5 @@ data class StockRow(
     val name: String,
     val description: String,
     @SerialName("price_buy") val priceBuy: Int,
+    val icon: String,
 )

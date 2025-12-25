@@ -7,6 +7,7 @@ data class StockUi(
     val description: String,
     val priceBuy: Int,
     val priceSell: Int,
+    val icon: String,
     val count: Int,
     val analytics: CommonTradingAnalytics?,
     val haveEnoughCash: Boolean,

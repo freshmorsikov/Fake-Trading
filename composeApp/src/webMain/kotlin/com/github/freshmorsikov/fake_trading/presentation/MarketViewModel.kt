@@ -271,6 +271,7 @@ class MarketViewModel() : ViewModel() {
                     description = stockCount.stock.description,
                     priceBuy = stockCount.stock.priceBuy,
                     priceSell = stockCount.stock.priceSell,
+                    icon = stockCount.stock.icon,
                     count = stockCount.count,
                     analytics = stockCount.stock.analytics.find { analytics ->
                         analytics.step == step.number

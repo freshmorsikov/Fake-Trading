@@ -49,6 +49,10 @@ kotlin {
             implementation(libs.koog)
 
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.coil.compose)
+            implementation(libs.coil.compose.core)
+            implementation(libs.coil.ktor)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

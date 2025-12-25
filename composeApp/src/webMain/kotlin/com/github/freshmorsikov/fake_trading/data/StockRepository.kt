@@ -44,6 +44,7 @@ class StockRepository {
                     description = stock.description,
                     priceBuy = priceBuy,
                     priceSell = priceBuy - SPREAD,
+                    icon = stock.icon,
                     analytics = analyticsForStock.map {
                         CommonTradingAnalytics(
                             change = it.change,
@@ -73,6 +74,7 @@ class StockRepository {
             description = stock.description,
             priceBuy = priceBuy,
             priceSell = priceBuy - SPREAD,
+            icon = stock.icon,
             analytics = analytics.map {
                 CommonTradingAnalytics(
                     change = it.change,

@@ -8,6 +8,7 @@ import ai.koog.prompt.structure.executeStructured
 import com.github.freshmorsikov.fake_trading.api.model.StockRow
 import fake_trading.composeApp.BuildConfig
 import kotlinx.serialization.Serializable
+import kotlin.random.Random
 
 @Serializable
 data class TradingAnalyticsResponse(
@@ -23,7 +24,7 @@ class TradingAnalytics(
     @property:LLMDescription("Влияние на компанию")
     val priceImpact: PriceImpact,
 
-    @property:LLMDescription("Небольшое объяснение анализа влияния")
+    @property:LLMDescription("Короткое объяснение влияния (1 предложение)")
     val shortNote: String,
 )
 
@@ -124,6 +125,8 @@ class TradingAnalyticsGenerator {
         }
 
         val newsList = news.joinToString(separator = " / ") { it }
+        val negativeCount = Random.nextInt(1, 4)
+        val positiveCount = Random.nextInt(2, 5)
 
         val generatedAnalytics = promtExecutor.executeStructured(
             prompt = prompt("structured-data") {
@@ -132,18 +135,21 @@ class TradingAnalyticsGenerator {
                             Вы — аналитический агент с фантазией, специализирующийся на креативной оценке ситуации на рынке акций. 
                             На рынке представлены компании: $companiesList
             
-                            Пользователь присылает вам выдуманные новости.
+                            Пользователь присылает вам выдуманные новости и количество положительной/отрицательной аналитики.
             
                             Ваши задачи:
                             Анализировать предоставленные новости, не обращая внимание на их саркастичность/ироничность/камичность и тд. 
                             Будьте креативны — иногда новости влияют на рынок не самым очевидным образом, как в минус, так и в плюс.
                             Строить причинно-следственные выводы о возможном влиянии новостей на котировки акций вымышленных компаний.
-                            Выбрать не больше 3-5 компаний, которые наиболее вероятно будут восприимчивы к данным новостям.
-                            Давать структурированный аналитический ответ: id компании, влияние на компанию, небольшое объяснение анализа влияния.
+                            Предоставить заказанное количество положительной/отрицательной аналитики.
+                            Давать структурированный аналитический ответ: id компании, влияние на компанию, короткое объяснение влияния (1 предложение).
                             Опираться исключительно на данные, присланные пользователем, не дополняя их реальными компаниями или реальными новостями.
                         """.trimIndent(),
                 )
-                user("Вот новости: $newsList. Проанализируй ситуацию на рынке")
+                user(
+                    "Вот новости: $newsList. Проанализируй ситуацию на рынке. " +
+                            "Найди $negativeCount компании с негативным влиянием и $positiveCount с позитивным."
+                )
             },
             model = OpenAIModels.Chat.GPT5_1,
             examples = tradingAnalyticsExamples,

@@ -11,6 +11,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.freshmorsikov.fake_trading.presentation.MarketViewModel
@@ -23,7 +24,7 @@ fun MarketScreen(viewModel: MarketViewModel = viewModel { MarketViewModel() }) {
     MaterialTheme {
         Box(
             modifier = Modifier
-                .background(color = MaterialTheme.colorScheme.background)
+                .background(color = Color(0xFEFEFE))
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
